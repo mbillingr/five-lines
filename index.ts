@@ -145,27 +145,27 @@ class Key implements Tile {
   isLock1() { return false; }
   isLock2() { return false; }
   draw(g: CanvasRenderingContext2D, x: number, y: number) {
-    g.fillStyle = this.keyConf.getColor();
+    this.keyConf.setColor(g);
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
   moveHorizontal(dx: number) {
-    remove(this.keyConf.getRemoveStrategy());
+    this.keyConf.removeLock();
     moveToTile(playerx + dx, playery);
   }
   moveVertical(dy: number) {
-    remove(this.keyConf.getRemoveStrategy());
+    this.keyConf.removeLock();
     moveToTile(playerx, playery + dy);
   }
   update(x: number, y: number) { }
 }
 
-class Lock implements Tile {
+class TheLock implements Tile {
   constructor(private keyConf: KeyConfiguration) { }
   isAir() { return false; }
   isLock1() { return this.keyConf.is1(); }
   isLock2() { return !this.keyConf.is1(); }
   draw(g: CanvasRenderingContext2D, x: number, y: number) {
-    g.fillStyle = this.keyConf.getColor();
+    this.keyConf.setColor(g);
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
   moveHorizontal(dx: number) { }
@@ -241,9 +241,9 @@ function transformTile(tile: RawTile) {
     case RawTile.FALLING_BOX: return new Box(new Falling());
     case RawTile.FLUX: return new Flux();
     case RawTile.KEY1: return new Key(YELLOW_KEY);
-    case RawTile.LOCK1: return new Lock(YELLOW_KEY);
+    case RawTile.LOCK1: return new TheLock(YELLOW_KEY);
     case RawTile.KEY2: return new Key(BLUE_KEY);
-    case RawTile.LOCK2: return new Lock(BLUE_KEY);
+    case RawTile.LOCK2: return new TheLock(BLUE_KEY);
     default: assertExhausted(tile);
   }
 }
@@ -284,10 +284,17 @@ class RemoveLock2 implements RemoveStrategy {
 }
 
 class KeyConfiguration {
-  constructor(private color: string, private _1: boolean, private removeStrategy: RemoveStrategy) { }
-  getColor() { return this.color; }
+  constructor(private color: string, private _1: boolean, private removeStrategy: RemoveStrategy) {
+  }
   is1() { return this._1; }
-  getRemoveStrategy() { return this.removeStrategy; }
+
+  removeLock() {
+      remove(this.removeStrategy);
+  }
+
+  setColor(g: CanvasRenderingContext2D) {
+    g.fillStyle = this.color;
+  }
 }
 const YELLOW_KEY = new KeyConfiguration("#ffcc00", true, new RemoveLock1());
 const BLUE_KEY = new KeyConfiguration("#00ccff", false, new RemoveLock2());
