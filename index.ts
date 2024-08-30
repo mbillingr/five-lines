@@ -239,18 +239,14 @@ class Player {
   }
 
   pushHorizontal(map: Map, tile: Tile, dx: number) {
-    if (map.isAir(this.x + dx + dx, this.y)
-        && !map.isAir(this.x + dx, this.y + 1)) {
-      map.setTile(this.x + dx + dx, this.y, tile);
-      this.moveToTile(map, this.x + dx, this.y);
-    }
+    map.pushHorizontal(this, tile, this.x, this.y, dx);
   }
 
   move(map: Map, dx: number, dy: number) {
     this.moveToTile(map, this.x + dx, this.y + dy);
   }
 
-  private moveToTile(map: Map, newx: number, newy: number) {
+  moveToTile(map: Map, newx: number, newy: number) {
     map.movePlayer(this.x, this.y, newx, newy);
     this.x = newx;
     this.y = newy;
@@ -259,11 +255,8 @@ class Player {
 
 class Map {
   private map: Tile[][];
-
-  private getMap() { return this.map; }
-
-  transform(rawMap: RawTile[][]) {
-      this.map = rawMap.map(row => row.map(transformTile));
+  constructor(rawMap: RawTile[][]) {
+    this.map = rawMap.map(row => row.map(transformTile));
   }
 
   update() {
@@ -283,8 +276,8 @@ class Map {
   }
 
   drop(tile: Tile, x: number, y: number) {
-    this.getMap()[y + 1][x] = tile;
-    this.getMap()[y][x] = new Air();
+    this.map[y + 1][x] = tile;
+    this.map[y][x] = new Air();
   }
 
   getBlockOnTopState(x: number, y: number) {
@@ -292,21 +285,16 @@ class Map {
   }
 
   moveHorizontal(player: Player, x: number, y: number, dx: number) {
-    this.map[y][x + dx].moveHorizontal(map, player, dx);
+    this.map[y][x + dx].moveHorizontal(this, player, dx);
   }
 
   moveVertical(player: Player, x: number, y: number, dy: number) {
-    this.map[y + dy][x].moveVertical(map, player, dy);
+    this.map[y + dy][x].moveVertical(this, player, dy);
   }
 
   isAir(x: number, y: number) {
     return this.map[y][x].isAir();
   }
-
-  setTile(x: number, y: number, tile: Tile) {
-    this.map[y][x] = tile;
-  }
-
   movePlayer(oldx: number, oldy: number, newx: number, newy: number) {
       this.map[oldy][oldx] = new Air();
       this.map[newy][newx] = new PlayerTile();
@@ -321,10 +309,17 @@ class Map {
       }
     }
   }
+
+  pushHorizontal(player: Player, tile: Tile, x: number, y: number, dx: number) {
+    if (this.isAir(x + dx + dx, y)
+        && !this.isAir(x + dx, y + 1)) {
+      this.map[y][x + dx + dx] = tile;
+      player.moveToTile(this, x + dx, y);
+    }
+  }
 }
 
 let player = new Player();
-let map = new Map();
 
 let rawMap: RawTile[][] = [
   [2, 2, 2, 2, 2, 2, 2, 2],
@@ -424,7 +419,7 @@ function gameLoop(map: Map, player: Player) {
 }
 
 window.onload = () => {
-  map.transform(rawMap);
+  let map = new Map(rawMap);
   gameLoop(map, player);
 }
 
