@@ -369,7 +369,7 @@ function createGraphics() {
   return g;
 }
 
-function draw(playr: Player) {
+function draw(player: Player) {
   let g = createGraphics();
   drawMap(g);
   player.draw(g);
