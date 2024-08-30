@@ -86,13 +86,17 @@ class Player implements Tile {
 interface FallingState {
   isFalling(): boolean;
   moveHorizontal(tile: Tile, dx: number): void;
+  drop(tile: Tile, x: number, y: number): void;
 }
-class Falling {
+class Falling implements FallingState {
   isFalling() { return true; }
-  moveHorizontal(tile: Tile, dx: number) {
+  moveHorizontal(tile: Tile, dx: number) { }
+  drop(tile: Tile, x: number, y: number) {
+    map[y + 1][x] = tile;
+    map[y][x] = new Air();
   }
 }
-class Resting {
+class Resting implements FallingState {
   isFalling() { return false; }
   moveHorizontal(tile: Tile, dx: number) {
     if (map[playery][playerx + dx + dx].isAir()
@@ -101,6 +105,7 @@ class Resting {
       moveToTile(playerx + dx, playery);
     }
   }
+  drop(tile: Tile, x: number, y: number) { }
 }
 class Stone implements Tile {
   private fallStrategy: FallStrategy;
@@ -186,15 +191,9 @@ class FallStrategy {
   constructor(private falling: FallingState) { }
   update(tile: Tile, x: number, y: number) {
     this.falling = map[y + 1][x].getBlockOnTopState();
-    this.drop(tile, x, y);
+    this.falling.drop(tile, x, y);
   }
-  private drop(tile: Tile, x: number, y: number) {
-    if (this.falling.isFalling()) {
-      map[y + 1][x] = tile;
-      map[y][x] = new Air();
-    }
-  }
-    moveHorizontal(tile: Tile, dx: number) {
+  moveHorizontal(tile: Tile, dx: number) {
         this.falling.moveHorizontal(tile, dx);
     }
 }
